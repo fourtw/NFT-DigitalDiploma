@@ -19,9 +19,14 @@ const queryClient = new QueryClient()
 const isLocalhost = import.meta.env.VITE_USE_LOCALHOST === 'true'
 const chains = isLocalhost ? [localhost] : [polygonMumbai]
 
+const walletConnectId =
+  import.meta.env.VITE_WALLETCONNECT_ID && import.meta.env.VITE_WALLETCONNECT_ID.trim().length > 0
+    ? import.meta.env.VITE_WALLETCONNECT_ID.trim()
+    : 'demo'
+
 const wagmiConfig = getDefaultConfig({
   appName: 'Project Vault',
-  projectId: import.meta.env.VITE_WALLETCONNECT_ID ?? 'demo',
+  projectId: walletConnectId,
   chains,
   ssr: false,
 })

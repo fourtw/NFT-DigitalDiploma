@@ -8,6 +8,7 @@ const navItems = [
   { label: 'Blockchain Explorer', path: '/explorer' },
   { label: 'Verification', path: '/verify' },
   { label: 'University', path: '/universities' },
+  { label: 'Upload', path: '/upload' },
 ]
 
 const Navbar = () => {

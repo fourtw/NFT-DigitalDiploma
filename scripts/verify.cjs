@@ -1,7 +1,5 @@
-import { run } from "hardhat";
-import * as dotenv from "dotenv";
-
-dotenv.config();
+const { run } = require("hardhat");
+require("dotenv").config();
 
 async function main() {
   const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -19,18 +17,25 @@ async function main() {
   try {
     await run("verify:verify", {
       address: contractAddress,
-      network: network,
+      network,
       constructorArguments: [],
     });
 
+    const explorer =
+      network === "mumbai"
+        ? "mumbai.polygonscan.com"
+        : network === "amoy"
+          ? "amoy.polygonscan.com"
+          : "polygonscan.com";
+
     console.log("\n✅ Contract verified successfully!");
-    console.log(`   View on explorer: https://${network === "mumbai" ? "mumbai.polygonscan.com" : network === "amoy" ? "amoy.polygonscan.com" : "polygonscan.com"}/address/${contractAddress}`);
-  } catch (error: any) {
-    if (error.message.includes("Already Verified")) {
+    console.log(`   View on explorer: https://${explorer}/address/${contractAddress}`);
+  } catch (error) {
+    if (error.message && error.message.includes("Already Verified")) {
       console.log("\n✅ Contract is already verified!");
     } else {
       console.error("\n❌ Verification failed:");
-      console.error(error.message);
+      console.error(error);
       process.exit(1);
     }
   }

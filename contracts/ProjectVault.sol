@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title ProjectVault
@@ -11,9 +10,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @notice Each token represents a unique diploma with SHA-256 hash verification
  */
 contract ProjectVault is ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _tokenIds;
+    uint256 private _tokenIds;
 
     // Mapping from file hash (SHA-256) to token ID
     mapping(bytes32 => uint256) public hashToTokenId;
@@ -60,8 +57,8 @@ contract ProjectVault is ERC721URIStorage, Ownable {
         require(to != address(0), "ProjectVault: cannot mint to zero address");
         require(hashToTokenId[fileHash] == 0, "ProjectVault: hash already exists");
 
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
+        _tokenIds += 1;
+        uint256 newTokenId = _tokenIds;
 
         hashToTokenId[fileHash] = newTokenId;
         tokenIdToHash[newTokenId] = fileHash;
@@ -91,7 +88,7 @@ contract ProjectVault is ERC721URIStorage, Ownable {
         returns (bool exists, uint256 tokenId, address owner, string memory metadataURI)
     {
         tokenId = hashToTokenId[fileHash];
-        exists = tokenId != 0 && tokenId <= _tokenIds.current();
+        exists = tokenId != 0 && tokenId <= _tokenIds;
 
         if (exists) {
             owner = ownerOf(tokenId);
@@ -107,7 +104,7 @@ contract ProjectVault is ERC721URIStorage, Ownable {
      * @return The current token count
      */
     function totalSupply() public view returns (uint256) {
-        return _tokenIds.current();
+        return _tokenIds;
     }
 
     /**

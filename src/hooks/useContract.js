@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { parseEther } from 'viem'
 
-// ProjectVault ABI (minimal untuk fungsi yang kita pakai)
 const PROJECT_VAULT_ABI = [
   {
     inputs: [
