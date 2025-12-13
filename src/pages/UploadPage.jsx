@@ -5,7 +5,7 @@ import NeonButton from '../components/NeonButton.jsx'
 import FileUploader from '../components/FileUploader.jsx'
 import { useUploadToIPFS } from '../hooks/useUploadToIPFS.js'
 import { useMintProofWithContract } from '../hooks/useMintProof.js'
-import { useContract } from '../hooks/useContract.js'
+import { useContract, useContractOwner } from '../hooks/useContract.js'
 
 const metrics = [
   { label: 'Total Issued', value: 42 },
@@ -16,6 +16,7 @@ const metrics = [
 const UploadPage = () => {
   const { address } = useAccount()
   const { contractAddress } = useContract()
+  const { owner: contractOwner, isLoading: isLoadingOwner } = useContractOwner()
   const [formData, setFormData] = useState({
     name: '',
     studentId: '',
@@ -26,6 +27,9 @@ const UploadPage = () => {
   const [ipfsResult, setIpfsResult] = useState(null)
   const { uploadMetadata, isUploading } = useUploadToIPFS()
   const [message, setMessage] = useState('')
+
+  // Check if connected wallet is the contract owner
+  const isOwner = address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase()
 
   // Convert hex string to bytes32
   const hashToBytes32 = (hexString) => {
@@ -52,46 +56,79 @@ const UploadPage = () => {
   const handleIssue = async (event) => {
     event.preventDefault()
     setMessage('')
+    
+    console.log('🔵 Issue Diploma clicked')
+    console.log('  - hashPayload:', hashPayload)
+    console.log('  - address:', address)
+    console.log('  - contractAddress:', contractAddress)
+    console.log('  - isOwner:', isOwner)
+    console.log('  - contractOwner:', contractOwner)
 
     if (!hashPayload.hash) {
-      setMessage('⚠️ Upload a diploma file to calculate the hash first.')
+      const msg = '⚠️ Upload a diploma file to calculate the hash first.'
+      setMessage(msg)
+      console.log('❌', msg)
       return
     }
 
     if (!address) {
-      setMessage('⚠️ Please connect your wallet first.')
+      const msg = '⚠️ Please connect your wallet first.'
+      setMessage(msg)
+      console.log('❌', msg)
       return
     }
 
     if (!contractAddress) {
-      setMessage('⚠️ Contract address not configured. Set VITE_CONTRACT_ADDRESS in .env')
+      const msg = '⚠️ Contract address not configured. Set VITE_CONTRACT_ADDRESS in .env'
+      setMessage(msg)
+      console.log('❌', msg)
+      return
+    }
+
+    if (!isOwner) {
+      const msg = `⚠️ Only contract owner can mint. Your wallet: ${address}, Owner: ${contractOwner}`
+      setMessage(msg)
+      console.log('❌', msg)
       return
     }
 
     try {
       // Step 1: Upload metadata to IPFS
+      console.log('📤 Step 1: Uploading metadata to IPFS...')
       setMessage('📤 Uploading metadata to IPFS...')
       const metadata = {
         ...formData,
         hash: hashPayload.hash,
         fileName: hashPayload.file?.name,
       }
+      console.log('  Metadata:', metadata)
+      
       const uploaded = await uploadMetadata(metadata)
+      console.log('  Upload result:', uploaded)
 
       if (!uploaded || !uploaded.cid) {
-        setMessage('❌ Failed to upload to IPFS')
+        const msg = '❌ Failed to upload to IPFS'
+        setMessage(msg)
+        console.log('❌', msg)
         return
       }
 
       setIpfsResult(uploaded)
+      console.log('✅ Step 1 complete: Metadata uploaded to IPFS')
       setMessage('✅ Metadata uploaded! Minting NFT...')
 
-      // Step 2: Mint NFT (executeMint will be called automatically via the hook)
-      // But we need to trigger it manually
+      // Step 2: Mint NFT
+      console.log('📤 Step 2: Minting NFT...')
+      console.log('  - fileHashBytes32:', fileHashBytes32)
+      console.log('  - metadataURI:', metadataURI)
+      console.log('  - to:', address)
+      
       await executeMint()
+      console.log('✅ Step 2 complete: Mint transaction sent')
     } catch (err) {
-      console.error('Issue error:', err)
-      setMessage(`❌ Error: ${err.message || 'Failed to issue diploma'}`)
+      console.error('❌ Issue error:', err)
+      const errorMsg = err.message || 'Failed to issue diploma'
+      setMessage(`❌ Error: ${errorMsg}`)
     }
   }
 
@@ -140,7 +177,22 @@ const UploadPage = () => {
             <NeonButton
               type="submit"
               className="w-full"
-              disabled={isUploading || isMinting || !address || !contractAddress}
+              disabled={isUploading || isMinting || !address || !contractAddress || !isOwner || !hashPayload.hash}
+              onClick={(e) => {
+                // Debug logging
+                if (!hashPayload.hash) {
+                  console.log('❌ No file hash - upload file first')
+                }
+                if (!address) {
+                  console.log('❌ No wallet connected')
+                }
+                if (!contractAddress) {
+                  console.log('❌ No contract address')
+                }
+                if (!isOwner) {
+                  console.log('❌ Not owner - Connected:', address, 'Owner:', contractOwner)
+                }
+              }}
             >
               {isUploading
                 ? 'Uploading to IPFS...'
@@ -153,6 +205,50 @@ const UploadPage = () => {
                   : 'Issue Diploma'}
             </NeonButton>
           </form>
+          
+          {/* Debug info */}
+          {(!address || !contractAddress || !isOwner || !hashPayload.hash) && (
+            <div className="text-xs text-yellow-400 bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/30 space-y-1">
+              <p className="font-semibold">⚠️ Button disabled. Missing requirements:</p>
+              <ul className="list-disc list-inside ml-2 space-y-0.5">
+                {!hashPayload.hash && <li>Upload a diploma file first</li>}
+                {!address && <li>Connect your wallet</li>}
+                {!contractAddress && <li>Contract address not configured</li>}
+                {address && contractAddress && (
+                  <li>
+                    {isLoadingOwner ? (
+                      <span>Loading owner information...</span>
+                    ) : contractOwner ? (
+                      isOwner ? (
+                        <span className="text-green-400">✅ You are the owner!</span>
+                      ) : (
+                        <>
+                          Wallet is not contract owner
+                          <br />
+                          <span className="text-white/60 text-xs">
+                            Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                            <br />
+                            Owner: {contractOwner.slice(0, 6)}...{contractOwner.slice(-4)}
+                            <br />
+                            {address.toLowerCase() === contractOwner.toLowerCase() ? (
+                              <span className="text-green-400">✅ Addresses match (case sensitive check)</span>
+                            ) : (
+                              <span className="text-red-400">❌ Addresses don't match</span>
+                            )}
+                          </span>
+                        </>
+                      )
+                    ) : (
+                      <span className="text-red-400">
+                        ❌ Could not load owner. Check contract address and network.
+                      </span>
+                    )}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          
           {message && (
             <div
               className={`text-sm p-3 rounded-2xl ${
@@ -201,6 +297,57 @@ const UploadPage = () => {
           {!contractAddress && (
             <div className="text-xs text-yellow-400 bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/30">
               ⚠️ Contract not configured. Add VITE_CONTRACT_ADDRESS to .env file
+            </div>
+          )}
+          {contractAddress && address && !isLoadingOwner && !isOwner && (
+            <div className="text-xs text-red-400 bg-red-500/10 p-3 rounded-xl border border-red-500/30 space-y-3">
+              <div>
+                ⚠️ Only contract owner can mint NFTs. 
+                <br />
+                <span className="text-white/60">
+                  {contractOwner ? (
+                    <>
+                      Owner: {contractOwner.slice(0, 6)}...{contractOwner.slice(-4)}
+                      <br />
+                      Connected: {address.slice(0, 6)}...{address.slice(-4)}
+                      <br />
+                      {address.toLowerCase() === contractOwner.toLowerCase() ? (
+                        <span className="text-green-400 text-xs">✅ Addresses match (but owner check failed - check case sensitivity)</span>
+                      ) : (
+                        <span className="text-red-400 text-xs">❌ Addresses don't match</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      ❌ Could not load contract owner
+                      <br />
+                      <span className="text-white/50 text-xs">
+                        Check browser console for errors. Possible issues:
+                        <br />• Contract address incorrect
+                        <br />• Contract not deployed
+                        <br />• Wrong network (localhost vs Mumbai)
+                      </span>
+                    </>
+                  )}
+                </span>
+              </div>
+              {contractOwner && (
+                <div className="pt-2 border-t border-red-500/30">
+                  <p className="text-white/80 mb-2 font-semibold">Solution:</p>
+                  <p className="text-white/70 text-xs mb-2">
+                    Contract was deployed with wrong owner. Deploy again with your PRIVATE_KEY:
+                  </p>
+                  <ol className="list-decimal list-inside text-white/70 text-xs space-y-1 ml-2">
+                    <li>Add PRIVATE_KEY to .env file</li>
+                    <li>Stop current dev server (Ctrl+C)</li>
+                    <li>Run: <code className="bg-white/10 px-1 rounded">npm run dev</code></li>
+                    <li>Contract will be deployed with your wallet as owner</li>
+                  </ol>
+                  <p className="text-yellow-300 text-xs mt-2">
+                    💡 Your wallet address from PRIVATE_KEY will automatically become the contract owner.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </GlassCard>

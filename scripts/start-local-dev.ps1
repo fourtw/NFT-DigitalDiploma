@@ -1,5 +1,7 @@
 Param(
-    [switch]$SkipNode
+    [switch]$SkipNode,
+    [string]$BindHost = "0.0.0.0",
+    [int]$Port = 5173
 )
 
 # Determine project root (script located in /scripts)
@@ -42,7 +44,19 @@ function Set-EnvValue {
         $newContent = $content + $line
     }
 
-$newContent | Set-Content $envPath
+    $newContent | Set-Content $envPath
+}
+
+function Is-Hardhat-Running {
+    try {
+        $conn = Get-NetTCPConnection -LocalPort 8545 -State Listen -ErrorAction Stop
+        return $conn -ne $null
+    }
+    catch {
+        # Fallback to netstat if Get-NetTCPConnection unavailable
+        $netstat = netstat -ano | Select-String ":8545" | Select-Object -First 1
+        return $netstat -ne $null
+    }
 }
 
 Write-Host '======================================='
@@ -50,50 +64,62 @@ Write-Host ' Project Vault - Local Dev Automation'
 Write-Host '======================================='
 Write-Host ''
 
-if (-not $SkipNode) {
-    Write-Host '🚀 Starting Hardhat node in a new window...'
-    Start-Process powershell -ArgumentList '-NoExit','-Command','npx hardhat node' -WorkingDirectory $ProjectRoot -WindowStyle Minimized | Out-Null
-    Start-Sleep -Seconds 5
-}
-else {
-    Write-Host '⚠️  SkipNode flag detected. Assuming Hardhat node is already running.'
-}
-
-Write-Host '📦 Deploying contract to localhost...'
-try {
-    $deployOutput = npx hardhat run scripts/deploy.cjs --network localhost
-    Write-Host $deployOutput
-}
-catch {
-    Write-Error '❌ Deployment failed. Make sure Hardhat node is running and try again.'
-    exit 1
-}
-
-$match = [regex]::Match($deployOutput, 'Contract Address:\s*(0x[a-fA-F0-9]{40})')
-if (-not $match.Success) {
-    Write-Error '❌ Could not parse contract address from deploy output.'
-    exit 1
-}
-
-$contractAddress = $match.Groups[1].Value
-
-Write-Host ''
-Write-Host '🛠  Updating .env with local contract address...'
-Set-EnvValue -Key 'VITE_CONTRACT_ADDRESS' -Value $contractAddress
+# Ensure .env exists with basic config
+Ensure-EnvFile | Out-Null
 Set-EnvValue -Key 'VITE_USE_LOCALHOST' -Value 'true'
 
-Write-Host '✅ .env updated:'
-Write-Host ('   VITE_CONTRACT_ADDRESS={0}' -f $contractAddress)
-Write-Host '   VITE_USE_LOCALHOST=true'
+Write-Host '▶️  Starting Vite dev server first...'
+Write-Host ('   Host: {0}  Port: {1}' -f $BindHost, $Port)
+Write-Host '   (Contract will be deployed in background)' -ForegroundColor Yellow
 Write-Host ''
 
-Write-Host '▶️  Launching Vite dev server (new window)...'
-$devCommand = 'npm run dev -- --host 0.0.0.0 --port 5173'
-Start-Process powershell -ArgumentList '-NoExit','-Command',$devCommand -WorkingDirectory $ProjectRoot -WindowStyle Normal | Out-Null
+# Start Hardhat + Deploy in background
+$deployScript = @"
+`$ProjectRoot = '$ProjectRoot'
+Set-Location `$ProjectRoot
+
+# Wait a bit for Vite to start
+Start-Sleep -Seconds 2
+
+if (-not (Get-NetTCPConnection -LocalPort 8545 -State Listen -ErrorAction SilentlyContinue)) {
+    Write-Host '🚀 Starting Hardhat node...' -ForegroundColor Cyan
+    Start-Process powershell -ArgumentList '-NoExit','-Command','npx hardhat node' -WorkingDirectory `$ProjectRoot -WindowStyle Minimized | Out-Null
+    Start-Sleep -Seconds 5
+}
+
+Write-Host '📦 Deploying contract to localhost...' -ForegroundColor Cyan
+try {
+    `$deployOutput = npx hardhat run scripts/deploy.cjs --network localhost 2>&1
+    `$match = [regex]::Match(`$deployOutput, 'Contract Address:\s*(0x[a-fA-F0-9]{40})')
+    if (`$match.Success) {
+        `$contractAddress = `$match.Groups[1].Value
+        `$envPath = Join-Path `$ProjectRoot '.env'
+        `$content = Get-Content `$envPath
+        `$pattern = '^VITE_CONTRACT_ADDRESS=.*$'
+        `$line = "VITE_CONTRACT_ADDRESS=`$contractAddress"
+        if (`$content -match `$pattern) {
+            `$newContent = `$content -replace `$pattern, `$line
+        } else {
+            `$newContent = `$content + `$line
+        }
+        `$newContent | Set-Content `$envPath
+        Write-Host "✅ Contract deployed: `$contractAddress" -ForegroundColor Green
+        Write-Host "✅ .env updated with contract address" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "❌ Deployment failed: `$_" -ForegroundColor Red
+}
+"@
+
+# Run deploy script in background
+Start-Job -ScriptBlock ([scriptblock]::Create($deployScript)) | Out-Null
+
+# Run Vite in foreground (this will block)
+npx vite --host $BindHost --port $Port
 
 Write-Host ''
 Write-Host '✨ Local dev environment ready!'
-Write-Host '   Hardhat node : separate PowerShell window'
-Write-Host '   Dev server   : http://localhost:5173'
+Write-Host '   Hardhat node : PowerShell window (if started)'
+Write-Host '   Dev server   : http://localhost:{0}' -f $Port
 Write-Host ('   Contract     : {0}' -f $contractAddress)
 

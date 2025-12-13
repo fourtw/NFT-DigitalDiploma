@@ -25,10 +25,13 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 1337,
-      accounts: {
-        mnemonic: "test test test test test test test test test test test junk",
-        count: 20,
-      },
+      // Use PRIVATE_KEY from .env if available, otherwise use default mnemonic
+      accounts: PRIVATE_KEY 
+        ? [PRIVATE_KEY]
+        : {
+            mnemonic: "test test test test test test test test test test test junk",
+            count: 20,
+          },
     },
     mumbai: {
       url: POLYGON_MUMBAI_RPC,

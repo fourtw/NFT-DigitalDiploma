@@ -2,21 +2,30 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import GlassCard from '../components/GlassCard.jsx'
 import NeonButton from '../components/NeonButton.jsx'
+import QRScanner from '../components/QRScanner.jsx'
+import QRGenerator from '../components/QRGenerator.jsx'
 import { useVerifyHash, useContract } from '../hooks/useContract.js'
 
 const VerifyPage = () => {
+  const [mode, setMode] = useState('manual') // 'manual' or 'scan'
   const [inputHash, setInputHash] = useState('')
   const [searchHash, setSearchHash] = useState(null)
-  const { contractAddress } = useContract()
+  const { contractAddress, isValid: isValidContract } = useContract()
   const { result, isLoading, error, refetch } = useVerifyHash(searchHash)
 
-  const handleVerify = () => {
-    if (!inputHash.trim()) {
-      return
+  const normalizeHash = (hashInput) => {
+    let hashBytes32 = hashInput.trim()
+    
+    // Try to parse as JSON first (in case QR contains JSON)
+    try {
+      const parsed = JSON.parse(hashBytes32)
+      if (parsed.hash) {
+        hashBytes32 = parsed.hash
+      }
+    } catch (e) {
+      // Not JSON, continue with raw hash
     }
 
-    // Convert input to bytes32 format
-    let hashBytes32 = inputHash.trim()
     if (!hashBytes32.startsWith('0x')) {
       // If it's a hex string without 0x, add it
       if (/^[0-9a-fA-F]{64}$/.test(hashBytes32)) {
@@ -32,6 +41,26 @@ const VerifyPage = () => {
       hashBytes32 = `0x${clean.padStart(64, '0')}`
     }
 
+    return hashBytes32
+  }
+
+  const handleVerify = () => {
+    if (!inputHash.trim()) {
+      return
+    }
+
+    const hashBytes32 = normalizeHash(inputHash)
+    setSearchHash(hashBytes32)
+    refetch()
+  }
+
+  const handleQRScan = (scannedData) => {
+    // Switch to manual mode to show the result
+    setMode('manual')
+    
+    // Extract hash from scanned data
+    const hashBytes32 = normalizeHash(scannedData)
+    setInputHash(hashBytes32)
     setSearchHash(hashBytes32)
     refetch()
   }
@@ -55,40 +84,99 @@ const VerifyPage = () => {
         <p className="text-white/60 mt-2">
           Enter the SHA-256 file hash to verify on-chain. Results are fetched from Polygon Mumbai.
         </p>
-        {!contractAddress && (
-          <p className="text-yellow-400 text-sm mt-2">
-            ⚠️ Contract address not configured. Set VITE_CONTRACT_ADDRESS in .env
-          </p>
+        {(!contractAddress || !isValidContract) && (
+          <div className="text-yellow-400 text-sm mt-2 space-y-1">
+            <p>⚠️ Contract address not configured or invalid.</p>
+            {contractAddress && !isValidContract && (
+              <p className="text-xs text-yellow-300/80">
+                Invalid address format: {contractAddress}
+              </p>
+            )}
+            <p className="text-xs text-yellow-300/80">
+              Set VITE_CONTRACT_ADDRESS in .env with a valid contract address (0x...)
+            </p>
+          </div>
         )}
       </div>
 
       <GlassCard className="p-8 space-y-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <input
-            type="text"
-            value={inputHash}
-            onChange={(e) => setInputHash(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Paste SHA-256 hash (64 hex chars or 0x...)"
-            className="flex-1 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-mono text-sm"
-            disabled={!contractAddress}
-          />
-          <NeonButton
-            onClick={handleVerify}
-            disabled={!contractAddress || isLoading || !inputHash.trim()}
-            className="w-full md:w-auto"
+        {/* Tab Switcher */}
+        <div className="flex gap-2 border-b border-white/10 pb-4">
+          <button
+            onClick={() => setMode('manual')}
+            className={`px-4 py-2 rounded-xl font-medium transition-colors ${
+              mode === 'manual'
+                ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50'
+                : 'text-white/60 hover:text-white/80'
+            }`}
           >
-            {isLoading ? 'Verifying...' : 'Verify'}
-          </NeonButton>
+            Manual Input
+          </button>
+          <button
+            onClick={() => setMode('scan')}
+            className={`px-4 py-2 rounded-xl font-medium transition-colors ${
+              mode === 'scan'
+                ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            Scan QR Code
+          </button>
         </div>
+
+        {/* Manual Input Mode */}
+        {mode === 'manual' && (
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              value={inputHash}
+              onChange={(e) => setInputHash(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Paste SHA-256 hash (64 hex chars or 0x...)"
+              className="flex-1 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-mono text-sm"
+              disabled={!contractAddress}
+            />
+            <NeonButton
+              onClick={handleVerify}
+              disabled={!contractAddress || isLoading || !inputHash.trim()}
+              className="w-full md:w-auto"
+            >
+              {isLoading ? 'Verifying...' : 'Verify'}
+            </NeonButton>
+          </div>
+        )}
+
+        {/* QR Scan Mode */}
+        {mode === 'scan' && (
+          <QRScanner
+            onScanSuccess={handleQRScan}
+            onError={(err) => console.error('QR Scan error:', err)}
+          />
+        )}
 
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/20 border border-red-500/50 rounded-2xl p-4 text-red-300 text-sm"
+            className="bg-red-500/20 border border-red-500/50 rounded-2xl p-4 text-red-300 text-sm space-y-2"
           >
-            Error: {error.message || 'Failed to verify'}
+            <p className="font-semibold">❌ Error: {error.message || 'Failed to verify'}</p>
+            {error.message?.includes('Contract not found') && (
+              <div className="mt-2 text-xs text-red-200/80 space-y-1">
+                <p>Possible solutions:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>Check if contract address in .env matches deployed contract</li>
+                  <li>Ensure contract is deployed to the correct network</li>
+                  <li>Restart dev server after updating .env</li>
+                  <li>Verify you're connected to the correct network (localhost:8545 or Mumbai)</li>
+                </ul>
+                {contractAddress && (
+                  <p className="mt-2 pt-2 border-t border-red-500/30">
+                    Current contract address: <span className="font-mono text-xs">{contractAddress}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -135,6 +223,15 @@ const VerifyPage = () => {
                       </a>
                     )}
                   </div>
+                </div>
+                
+                {/* QR Code Generator */}
+                <div className="pt-4 border-t border-white/10">
+                  <QRGenerator
+                    hash={searchHash}
+                    tokenId={result.tokenId}
+                    metadataURI={result.metadataURI}
+                  />
                 </div>
               </>
             ) : (

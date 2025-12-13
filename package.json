@@ -4,8 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/start-local-dev.ps1",
+    "dev:vite": "vite --host 0.0.0.0 --port 5173",
     "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/start-local-dev.ps1",
+    "contract:address": "powershell -ExecutionPolicy Bypass -File scripts/show-contract-address.ps1",
+    "check:privatekey": "powershell -ExecutionPolicy Bypass -File scripts/check-private-key.ps1",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -33,6 +36,8 @@
     "@rainbow-me/rainbowkit": "^2.2.9",
     "@tanstack/react-query": "^5.90.10",
     "framer-motion": "^12.23.24",
+    "html5-qrcode": "^2.3.8",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",

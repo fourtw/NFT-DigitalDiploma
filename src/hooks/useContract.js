@@ -1,8 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { parseEther } from 'viem'
 
 const PROJECT_VAULT_ABI = [
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
   {
     inputs: [
       { internalType: 'address', name: 'to', type: 'address' },
@@ -41,6 +48,13 @@ const PROJECT_VAULT_ABI = [
     type: 'function',
   },
   {
+    inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'uint256', name: 'tokenId', type: 'uint256' },
@@ -56,12 +70,24 @@ const PROJECT_VAULT_ABI = [
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || ''
 
+// Validate Ethereum address format
+const isValidAddress = (address) => {
+  if (!address) return false
+  return /^0x[a-fA-F0-9]{40}$/.test(address)
+}
+
 export const useContract = () => {
   const contractConfig = useMemo(
-    () => ({
-      address: CONTRACT_ADDRESS,
-      abi: PROJECT_VAULT_ABI,
-    }),
+    () => {
+      const address = CONTRACT_ADDRESS.trim()
+      if (!address || !isValidAddress(address)) {
+        return null
+      }
+      return {
+        address: address,
+        abi: PROJECT_VAULT_ABI,
+      }
+    },
     [],
   )
 
@@ -69,6 +95,7 @@ export const useContract = () => {
     contractAddress: CONTRACT_ADDRESS,
     contractConfig,
     abi: PROJECT_VAULT_ABI,
+    isValid: isValidAddress(CONTRACT_ADDRESS),
   }
 }
 
@@ -115,14 +142,37 @@ export const useMintProofContract = (to, fileHash, metadataURI) => {
 export const useVerifyHash = (fileHash) => {
   const { contractConfig } = useContract()
 
+  // Validate fileHash format (must be bytes32 = 66 chars with 0x prefix)
+  const isValidHash = fileHash && 
+    typeof fileHash === 'string' && 
+    fileHash.startsWith('0x') && 
+    fileHash.length === 66
+
   const { data, isLoading, error, refetch } = useReadContract({
-    ...contractConfig,
+    ...(contractConfig || {}),
     functionName: 'verifyHash',
-    args: fileHash ? [fileHash] : undefined,
+    args: isValidHash ? [fileHash] : undefined,
     query: {
-      enabled: !!fileHash && !!contractConfig.address,
+      enabled: isValidHash && !!contractConfig?.address,
+      retry: false, // Don't retry on error
     },
   })
+
+  // Enhanced error handling
+  let displayError = error
+  if (error) {
+    const errorMessage = error.message || String(error)
+    if (errorMessage.includes('returned no data') || errorMessage.includes('0x')) {
+      displayError = new Error(
+        'Contract not found or invalid address. Please check:\n' +
+        '1. Contract address in .env is correct\n' +
+        '2. Contract is deployed to this address\n' +
+        '3. You are connected to the correct network (localhost or Mumbai)'
+      )
+    } else if (errorMessage.includes('invalid address')) {
+      displayError = new Error('Invalid contract address. Check VITE_CONTRACT_ADDRESS in .env')
+    }
+  }
 
   return {
     result: data
@@ -134,7 +184,7 @@ export const useVerifyHash = (fileHash) => {
         }
       : null,
     isLoading,
-    error,
+    error: displayError,
     refetch,
   }
 }
@@ -153,6 +203,79 @@ export const useTotalSupply = () => {
   return {
     totalSupply: data || 0n,
     isLoading,
+    error,
+  }
+}
+
+export const useContractOwner = () => {
+  const { contractConfig } = useContract()
+
+  const { data, isLoading, error } = useReadContract({
+    ...(contractConfig || {}),
+    functionName: 'owner',
+    query: {
+      enabled: !!contractConfig?.address,
+      retry: 1, // Retry once if failed
+    },
+  })
+
+  // Log for debugging
+  useEffect(() => {
+    if (contractConfig?.address) {
+      console.log('🔍 Checking contract owner:', {
+        contractAddress: contractConfig.address,
+        isLoading,
+        owner: data,
+        error: error?.message,
+      })
+    } else {
+      console.log('⚠️ No contract address configured')
+    }
+  }, [contractConfig?.address, isLoading, data, error])
+
+  return {
+    owner: data,
+    isLoading,
+    error,
+  }
+}
+
+export const useTransferOwnership = () => {
+  const { contractConfig } = useContract()
+  const { writeContract, data: hash, isPending, error } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
+  const transferOwnership = async (newOwner) => {
+    if (!contractConfig.address) {
+      throw new Error('Contract address not configured. Set VITE_CONTRACT_ADDRESS in .env')
+    }
+
+    if (!newOwner || newOwner === '0x0000000000000000000000000000000000000000') {
+      throw new Error('Invalid owner address')
+    }
+
+    try {
+      await writeContract({
+        ...contractConfig,
+        functionName: 'transferOwnership',
+        args: [newOwner],
+      })
+    } catch (err) {
+      console.error('Transfer ownership error:', err)
+      throw err
+    }
+  }
+
+  return {
+    transferOwnership,
+    hash,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    isLoading: isPending || isConfirming,
     error,
   }
 }
