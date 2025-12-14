@@ -21,7 +21,7 @@ const Dashboard = () => (
       <p className="text-white/60 uppercase text-xs tracking-[0.5em]">University Portal</p>
       <h1 className="text-4xl font-semibold mt-4">Live issuance telemetry</h1>
       <p className="text-white/60 mt-2">
-        Monitor issuance velocity, pending requests, and contract health on Polygon Mumbai.
+        Monitor issuance velocity, pending requests, and contract health on Polygon Amoy.
       </p>
     </div>
 

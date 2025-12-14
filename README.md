@@ -18,7 +18,7 @@
      VITE_USE_LOCALHOST=true
      VITE_WALLETCONNECT_ID=demo
      PRIVATE_KEY=
-     POLYGON_MUMBAI_RPC=https://rpc.ankr.com/polygon_mumbai
+     POLYGON_AMOY_RPC=https://rpc.amoy.polygon.technology
      POLYGON_AMOY_RPC=https://rpc.ankr.com/polygon_amoy
      POLYGON_MAINNET_RPC=https://polygon-rpc.com
      POLYGONSCAN_API_KEY=

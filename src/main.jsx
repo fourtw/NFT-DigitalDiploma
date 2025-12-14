@@ -7,7 +7,7 @@ import {
   midnightTheme,
 } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
-import { polygonMumbai, localhost } from 'wagmi/chains'
+import { polygonAmoy, localhost } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.jsx'
 import './styles/globals.css'
@@ -17,7 +17,7 @@ const queryClient = new QueryClient()
 
 // Support localhost untuk development
 const isLocalhost = import.meta.env.VITE_USE_LOCALHOST === 'true'
-const chains = isLocalhost ? [localhost] : [polygonMumbai]
+const chains = isLocalhost ? [localhost] : [polygonAmoy]
 
 const walletConnectId =
   import.meta.env.VITE_WALLETCONNECT_ID && import.meta.env.VITE_WALLETCONNECT_ID.trim().length > 0

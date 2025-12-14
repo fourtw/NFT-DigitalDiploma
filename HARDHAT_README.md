@@ -2,7 +2,7 @@
 
 ## Overview
 
-Smart contract ERC721 untuk NFT Diploma dengan verifikasi hash SHA-256. Deploy ke Polygon Mumbai (nanti bisa migrasi ke Amoy/Mainnet).
+Smart contract ERC721 untuk NFT Diploma dengan verifikasi hash SHA-256. Deploy ke Polygon Amoy testnet atau Mainnet.
 
 ## Contract Features
 
@@ -54,8 +54,8 @@ Buat file `.env` di root project dengan isi:
 # Private key of the deployer account (WITHOUT 0x prefix)
 PRIVATE_KEY=your_private_key_here
 
-# Polygon Mumbai RPC endpoint
-POLYGON_MUMBAI_RPC=https://rpc.ankr.com/polygon_mumbai
+# Polygon Amoy RPC endpoint
+POLYGON_AMOY_RPC=https://rpc.amoy.polygon.technology
 
 # Polygon Amoy RPC endpoint (optional)
 POLYGON_AMOY_RPC=https://rpc.ankr.com/polygon_amoy
@@ -71,7 +71,7 @@ POLYGONSCAN_API_KEY=your_polygonscan_api_key_here
 CONTRACT_ADDRESS=
 
 # Network name for verification
-NETWORK=mumbai
+NETWORK=amoy
 ```
 
 ### 4. Compile Contract
@@ -82,10 +82,10 @@ npx hardhat compile
 
 ## 📤 Deploy Contract
 
-### Deploy ke Polygon Mumbai
+### Deploy ke Polygon Amoy
 
 ```bash
-npx hardhat run scripts/deploy.ts --network mumbai
+npx hardhat run scripts/deploy.ts --network amoy
 ```
 
 Setelah deploy, **simpan contract address** yang muncul di output.
@@ -116,7 +116,7 @@ npx hardhat run scripts/verify.ts
 ### Cara 2: Manual verify
 
 ```bash
-npx hardhat verify --network mumbai <CONTRACT_ADDRESS>
+npx hardhat verify --network amoy <CONTRACT_ADDRESS>
 ```
 
 ## 🔗 Update Frontend
@@ -176,10 +176,10 @@ npx hardhat test
 
 ## 📚 Network Configuration
 
-### Polygon Mumbai
-- **Chain ID**: 80001
-- **RPC**: https://rpc.ankr.com/polygon_mumbai
-- **Explorer**: https://mumbai.polygonscan.com
+### Polygon Amoy
+- **Chain ID**: 80002
+- **RPC**: https://rpc.amoy.polygon.technology
+- **Explorer**: https://amoy.polygonscan.com
 - **Faucet**: https://faucet.polygon.technology/
 
 ### Polygon Amoy (New Testnet)

@@ -41,7 +41,7 @@ const LandingPage = () => (
           </h1>
         </motion.div>
         <p className="text-lg text-white/70 max-w-xl">
-          A futuristic issuance and verification portal built for Polygon Mumbai. Project
+          A futuristic issuance and verification portal built for Polygon Amoy. Project
           Vault transforms every diploma into a verifiable asset secured by wagmi +
           RainbowKit.
         </p>

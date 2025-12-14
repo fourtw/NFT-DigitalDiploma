@@ -6,7 +6,7 @@ Setelah deploy smart contract, ikuti langkah ini untuk menghubungkannya dengan f
 
 ### 1. Deploy Smart Contract
 
-Ikuti instruksi di `HARDHAT_README.md` untuk deploy contract ke Polygon Mumbai.
+Ikuti instruksi di `HARDHAT_README.md` untuk deploy contract ke Polygon Amoy.
 
 Setelah deploy, **simpan contract address** yang muncul.
 
@@ -17,6 +17,13 @@ Buat file `.env` di root project (sama level dengan `package.json`):
 ```env
 # Contract address dari deployment
 VITE_CONTRACT_ADDRESS=0xYourContractAddressHere
+
+# Pinata JWT (API Key → New Key → copy JWT)
+VITE_PINATA_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6...
+
+# Optional: custom Pinata base/gateway (biarkan default jika tidak perlu)
+# VITE_PINATA_BASE_URL=https://api.pinata.cloud
+# VITE_PINATA_GATEWAY=https://gateway.pinata.cloud/ipfs
 
 # WalletConnect Project ID (optional, untuk production)
 VITE_WALLETCONNECT_ID=your_walletconnect_project_id
@@ -78,55 +85,23 @@ npm run dev
 
 Sebelum deploy ke production:
 
-- [ ] Deploy contract ke Polygon Mainnet (bukan Mumbai)
+- [ ] Deploy contract ke Polygon Mainnet (production)
 - [ ] Update `VITE_CONTRACT_ADDRESS` dengan mainnet address
 - [ ] Setup real IPFS service (Pinata/NFT.Storage)
 - [ ] Update `src/utils/ipfs.js` dengan real IPFS API
 - [ ] Test semua fitur di mainnet
 - [ ] Setup monitoring untuk contract events
 
-### 7. Real IPFS Integration
+### 7. Real IPFS Integration (Pinata)
 
-Saat ini IPFS masih mock. Untuk production, ganti `src/utils/ipfs.js` dengan service real:
+Frontend sudah di-wire ke Pinata via JWT (lihat `src/utils/ipfs.js`).
 
-#### Option A: Pinata (Recommended)
+Langkah cepat:
 
-```bash
-npm install pinata-sdk
-```
-
-Update `uploadJSONToIPFS`:
-
-```js
-import pinataSDK from '@pinata/sdk'
-
-const pinata = pinataSDK(process.env.VITE_PINATA_API_KEY, process.env.VITE_PINATA_SECRET_KEY)
-
-export const uploadJSONToIPFS = async (payload) => {
-  const metadata = formatMetadata(payload)
-  const options = {
-    pinataMetadata: { name: `diploma-${payload.hash.slice(0, 8)}` },
-    pinataOptions: { cidVersion: 1 },
-  }
-  
-  const result = await pinata.pinJSONToIPFS(metadata, options)
-  return {
-    cid: `ipfs://${result.IpfsHash}`,
-    gatewayUrl: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
-    payload: metadata,
-    rawPayload: payload,
-    timestamp: new Date().toISOString(),
-  }
-}
-```
-
-#### Option B: NFT.Storage
-
-```bash
-npm install nft.storage
-```
-
-Update dengan NFT.Storage API.
+1. Buat JWT di Pinata → “API Keys” → “New Key” → copy JWT.
+2. Tambah ke `.env` (lihat langkah 2 di atas) lalu restart dev server.
+3. Saat minting, metadata akan otomatis di-pin ke Pinata (`pinJSONToIPFS`).
+4. CID/gateway akan dipakai sebagai `metadataURI` untuk mint.
 
 ### 8. Contract Events
 
@@ -154,7 +129,7 @@ Setelah setup ini, semua fitur sudah terhubung:
 
 - ✅ **Minting**: Upload → IPFS → Mint NFT ke contract
 - ✅ **Verification**: Query contract untuk verify hash
-- ✅ **Wallet**: Auto switch ke Polygon Mumbai
+- ✅ **Wallet**: Auto switch ke Polygon Amoy
 - ✅ **Transaction**: Real on-chain transactions
 
 Website sekarang **fully functional** dengan blockchain! 🚀

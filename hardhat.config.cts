@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const POLYGON_MUMBAI_RPC = process.env.POLYGON_MUMBAI_RPC || "https://rpc.ankr.com/polygon_mumbai";
+const POLYGON_AMOY_RPC = process.env.POLYGON_AMOY_RPC || "https://rpc.amoy.polygon.technology";
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || "";
 
 const config: HardhatUserConfig = {
@@ -33,8 +33,8 @@ const config: HardhatUserConfig = {
             count: 20,
           },
     },
-    mumbai: {
-      url: POLYGON_MUMBAI_RPC,
+    amoy: {
+      url: POLYGON_AMOY_RPC,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 80001,
     },
@@ -51,7 +51,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      polygonMumbai: POLYGONSCAN_API_KEY,
+      polygonAmoy: POLYGONSCAN_API_KEY,
       polygonAmoy: POLYGONSCAN_API_KEY,
       polygon: POLYGONSCAN_API_KEY,
     },

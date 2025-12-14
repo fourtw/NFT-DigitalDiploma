@@ -25,6 +25,7 @@ const UploadPage = () => {
   })
   const [hashPayload, setHashPayload] = useState({ file: null, hash: '' })
   const [ipfsResult, setIpfsResult] = useState(null)
+  const [shouldMint, setShouldMint] = useState(false)
   const { uploadMetadata, isUploading } = useUploadToIPFS()
   const [message, setMessage] = useState('')
 
@@ -52,6 +53,30 @@ const UploadPage = () => {
       setMessage(`❌ Mint failed: ${mintError || 'Unknown error'}`)
     }
   }, [status, mintError])
+
+  // Trigger mint only after IPFS upload is done and state sudah terbarui
+  useEffect(() => {
+    if (!shouldMint) return
+    if (!metadataURI || !fileHashBytes32 || !address) return
+
+    const runMint = async () => {
+      try {
+        console.log('📤 Step 2: Minting NFT...')
+        console.log('  - fileHashBytes32:', fileHashBytes32)
+        console.log('  - metadataURI:', metadataURI)
+        console.log('  - to:', address)
+        await executeMint()
+        console.log('✅ Step 2 complete: Mint transaction sent')
+      } catch (err) {
+        console.error('❌ Mint error:', err)
+        setMessage(`❌ Error: ${err.message || 'Failed to mint'}`)
+      } finally {
+        setShouldMint(false)
+      }
+    }
+
+    runMint()
+  }, [shouldMint, metadataURI, fileHashBytes32, address, executeMint])
 
   const handleIssue = async (event) => {
     event.preventDefault()
@@ -116,15 +141,7 @@ const UploadPage = () => {
       setIpfsResult(uploaded)
       console.log('✅ Step 1 complete: Metadata uploaded to IPFS')
       setMessage('✅ Metadata uploaded! Minting NFT...')
-
-      // Step 2: Mint NFT
-      console.log('📤 Step 2: Minting NFT...')
-      console.log('  - fileHashBytes32:', fileHashBytes32)
-      console.log('  - metadataURI:', metadataURI)
-      console.log('  - to:', address)
-      
-      await executeMint()
-      console.log('✅ Step 2 complete: Mint transaction sent')
+      setShouldMint(true)
     } catch (err) {
       console.error('❌ Issue error:', err)
       const errorMsg = err.message || 'Failed to issue diploma'
@@ -285,7 +302,7 @@ const UploadPage = () => {
                 {txHash}
               </p>
               <a
-                href={`https://mumbai.polygonscan.com/tx/${txHash}`}
+                href={`https://amoy.polygonscan.com/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neon-blue hover:underline inline-block"
@@ -325,7 +342,7 @@ const UploadPage = () => {
                         Check browser console for errors. Possible issues:
                         <br />• Contract address incorrect
                         <br />• Contract not deployed
-                        <br />• Wrong network (localhost vs Mumbai)
+                        <br />• Wrong network (localhost vs Amoy)
                       </span>
                     </>
                   )}

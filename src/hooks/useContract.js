@@ -148,15 +148,21 @@ export const useVerifyHash = (fileHash) => {
     fileHash.startsWith('0x') && 
     fileHash.length === 66
 
-  const { data, isLoading, error, refetch } = useReadContract({
-    ...(contractConfig || {}),
-    functionName: 'verifyHash',
-    args: isValidHash ? [fileHash] : undefined,
-    query: {
-      enabled: isValidHash && !!contractConfig?.address,
-      retry: false, // Don't retry on error
-    },
-  })
+  const { data, isLoading, error, refetch } = useReadContract(
+    isValidHash && contractConfig?.address
+      ? {
+          ...contractConfig,
+          functionName: 'verifyHash',
+          args: [fileHash],
+          query: {
+            enabled: true,
+            retry: false, // Don't retry on error
+          },
+        }
+      : {
+          enabled: false,
+        },
+  )
 
   // Enhanced error handling
   let displayError = error
@@ -167,7 +173,7 @@ export const useVerifyHash = (fileHash) => {
         'Contract not found or invalid address. Please check:\n' +
         '1. Contract address in .env is correct\n' +
         '2. Contract is deployed to this address\n' +
-        '3. You are connected to the correct network (localhost or Mumbai)'
+        '3. You are connected to the correct network (localhost or Amoy)'
       )
     } else if (errorMessage.includes('invalid address')) {
       displayError = new Error('Invalid contract address. Check VITE_CONTRACT_ADDRESS in .env')

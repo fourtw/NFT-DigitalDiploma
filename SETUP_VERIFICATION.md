@@ -4,7 +4,7 @@ Panduan lengkap untuk setup halaman Verification agar bisa melakukan verifikasi 
 
 ## 📋 Prerequisites
 
-1. **Smart Contract sudah di-deploy** (ke localhost atau Polygon Mumbai)
+1. **Smart Contract sudah di-deploy** (ke localhost atau Polygon Amoy)
 2. **File `.env` sudah dibuat** dengan contract address
 
 ## 🚀 Langkah-langkah Setup
@@ -85,7 +85,7 @@ npm run dev
 
 ---
 
-### Opsi 2: Deploy ke Polygon Mumbai (Production/Testnet)
+### Opsi 2: Deploy ke Polygon Amoy (Testnet)
 
 #### Step 1: Siapkan Environment Variables untuk Hardhat
 
@@ -94,32 +94,32 @@ Buat atau edit file `.env` di root folder (sama dengan `.env` untuk frontend, ta
 ```env
 # Hardhat Deployment
 PRIVATE_KEY=your_private_key_here
-POLYGON_MUMBAI_RPC=https://rpc.ankr.com/polygon_mumbai
+POLYGON_AMOY_RPC=https://rpc.amoy.polygon.technology
 POLYGONSCAN_API_KEY=your_polygonscan_api_key_here
 ```
 
 **Cara mendapatkan:**
 - **PRIVATE_KEY**: Private key dari wallet yang akan digunakan untuk deploy (dari MetaMask: Account Details > Export Private Key)
-- **POLYGON_MUMBAI_RPC**: Bisa pakai `https://rpc.ankr.com/polygon_mumbai` (gratis) atau daftar di Alchemy/Infura
+- **POLYGON_AMOY_RPC**: Bisa pakai `https://rpc.amoy.polygon.technology` (gratis) atau daftar di Alchemy/Infura
 - **POLYGONSCAN_API_KEY**: Daftar di [Polygonscan](https://polygonscan.com/apis) untuk mendapatkan API key (gratis)
 
 #### Step 2: Dapatkan Testnet MATIC
 
-1. Buka [Polygon Mumbai Faucet](https://faucet.polygon.technology/)
+1. Buka [Polygon Faucet](https://faucet.polygon.technology/) untuk Amoy
 2. Masukkan alamat wallet Anda
 3. Request testnet MATIC (gratis)
 
-#### Step 3: Deploy Contract ke Mumbai
+#### Step 3: Deploy Contract ke Amoy
 
 ```bash
 cd D:\Warzone\prototype
-npx hardhat run scripts/deploy.ts --network mumbai
+npx hardhat run scripts/deploy.ts --network amoy
 ```
 
 Output:
 ```
 Deploying ProjectVault...
-ProjectVault deployed to: 0xYourContractAddressOnMumbai
+ProjectVault deployed to: 0xYourContractAddressOnAmoy
 ```
 
 **Catat alamat kontrak ini!**
@@ -127,7 +127,7 @@ ProjectVault deployed to: 0xYourContractAddressOnMumbai
 #### Step 4: Verify Contract (Optional tapi Recommended)
 
 ```bash
-npx hardhat run scripts/verify.ts --network mumbai
+npx hardhat run scripts/verify.ts --network amoy
 ```
 
 #### Step 5: Update Frontend `.env`
@@ -136,7 +136,7 @@ Edit file `.env`:
 
 ```env
 VITE_WALLETCONNECT_ID=your_walletconnect_id_here
-VITE_CONTRACT_ADDRESS=0xYourContractAddressOnMumbai
+VITE_CONTRACT_ADDRESS=0xYourContractAddressOnAmoy
 VITE_USE_LOCALHOST=false
 ```
 
@@ -147,11 +147,11 @@ VITE_USE_LOCALHOST=false
 npm run dev
 ```
 
-#### Step 7: Connect Wallet ke Polygon Mumbai
+#### Step 7: Connect Wallet ke Polygon Amoy
 
 1. Buka website
 2. Klik "Connect Wallet"
-3. Pastikan wallet terhubung ke **Polygon Mumbai** (chainId: 80001)
+3. Pastikan wallet terhubung ke **Polygon Amoy** (chainId: 80002)
 4. Jika belum, wallet akan otomatis prompt untuk switch network
 
 #### Step 8: Test Verification
@@ -163,10 +163,10 @@ npm run dev
 
 ## ✅ Checklist Setup
 
-- [ ] Smart contract sudah di-deploy (localhost atau Mumbai)
+- [ ] Smart contract sudah di-deploy (localhost atau Amoy)
 - [ ] File `.env` sudah dibuat dengan `VITE_CONTRACT_ADDRESS`
 - [ ] Dev server sudah di-restart setelah update `.env`
-- [ ] Wallet sudah connect ke network yang benar (localhost 1337 atau Mumbai 80001)
+- [ ] Wallet sudah connect ke network yang benar (localhost 1337 atau Amoy 80002)
 - [ ] Warning "Contract address not configured" sudah hilang di halaman `/verify`
 
 ## 🔍 Troubleshooting
@@ -198,7 +198,7 @@ npm run dev
 ## 📚 Resources
 
 - [Hardhat Documentation](https://hardhat.org/docs)
-- [Polygon Mumbai Faucet](https://faucet.polygon.technology/)
+- [Polygon Faucet](https://faucet.polygon.technology/)
 - [Polygonscan API](https://polygonscan.com/apis)
 - [WalletConnect Cloud](https://cloud.walletconnect.com)
 

@@ -6,10 +6,10 @@ import {
   useChainId,
   useSwitchChain,
 } from 'wagmi'
-import { polygonMumbai, localhost } from 'wagmi/chains'
+import { polygonAmoy, localhost } from 'wagmi/chains'
 
 const isLocalhost = import.meta.env.VITE_USE_LOCALHOST === 'true'
-const targetChain = isLocalhost ? localhost : polygonMumbai
+const targetChain = isLocalhost ? localhost : polygonAmoy
 
 export const useWallet = () => {
   const { address, status, isConnected } = useAccount()

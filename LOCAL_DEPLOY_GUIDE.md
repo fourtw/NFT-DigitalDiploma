@@ -174,18 +174,22 @@ console.log("Total Supply:", totalSupply.toString())
 
 Setelah testing di localhost berhasil:
 
-1. **Deploy ke Polygon Mumbai** (testnet):
+1. **Deploy ke Polygon Amoy** (testnet):
    ```bash
-   npx hardhat run scripts/deploy.ts --network mumbai
+   npx hardhat run scripts/deploy.ts --network amoy
    ```
 
-2. **Update `.env`**:
+2. **Update `.env`** (termasuk Pinata):
    ```env
-   VITE_CONTRACT_ADDRESS=0xMumbaiContractAddress
+   VITE_CONTRACT_ADDRESS=0xAmoyContractAddress
    VITE_USE_LOCALHOST=false  # atau hapus line ini
+   VITE_PINATA_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6...
+   # Opsional: custom gateway/base URL
+   # VITE_PINATA_GATEWAY=https://gateway.pinata.cloud/ipfs
+   # VITE_PINATA_BASE_URL=https://api.pinata.cloud
    ```
 
-3. **Test di Mumbai** dengan real MATIC (dapat dari faucet)
+3. **Test di Amoy** dengan real MATIC (dapat dari faucet)
 
 4. **Deploy ke Mainnet** saat siap production!
 

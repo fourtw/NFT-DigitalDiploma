@@ -128,7 +128,7 @@ async function main() {
   console.log(`     VITE_CONTRACT_ADDRESS=${contractAddress}`);
   console.log("  3. Connect wallet with owner address:", deployerAddress);
   console.log("  4. Verify the contract (optional):");
-  console.log(`     npx hardhat verify --network mumbai ${contractAddress}`);
+  console.log(`     npx hardhat verify --network amoy ${contractAddress}`);
 }
 
 main()

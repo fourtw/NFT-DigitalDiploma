@@ -14,7 +14,7 @@ const WalletConnectButton = ({ className = '' }) => (
       const wrongNetwork = connected && chain.unsupported
 
       const label = wrongNetwork
-        ? 'Switch to Polygon Mumbai'
+        ? 'Switch to Polygon Amoy'
         : connected
           ? `${account.displayName} · ${chain.name}`
           : 'Connect Wallet'

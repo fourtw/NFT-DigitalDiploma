@@ -8,7 +8,7 @@ async function main() {
     throw new Error("❌ CONTRACT_ADDRESS not set in .env file");
   }
 
-  const network = process.env.NETWORK || "mumbai";
+  const network = process.env.NETWORK || "amoy";
 
   console.log(`🔍 Verifying contract on ${network}...`);
   console.log("  Contract Address:", contractAddress);
@@ -22,8 +22,8 @@ async function main() {
     });
 
     const explorer =
-      network === "mumbai"
-        ? "mumbai.polygonscan.com"
+      network === "amoy"
+        ? "amoy.polygonscan.com"
         : network === "amoy"
           ? "amoy.polygonscan.com"
           : "polygonscan.com";

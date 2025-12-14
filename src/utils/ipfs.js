@@ -1,16 +1,17 @@
 /**
- * Upload JSON metadata to IPFS
- * 
- * Note: This uses a public IPFS gateway. For production, consider:
- * - Pinata (https://pinata.cloud)
- * - Web3.Storage (https://web3.storage)
- * - NFT.Storage (https://nft.storage)
- * 
- * Current implementation uses mock for development.
- * Replace with real IPFS service in production.
+ * Upload JSON/file to IPFS via Pinata (JWT)
  */
 
-const delay = (ms = 1200) => new Promise((resolve) => setTimeout(resolve, ms))
+const PINATA_JWT = import.meta.env.VITE_PINATA_JWT
+const PINATA_BASE_URL = import.meta.env.VITE_PINATA_BASE_URL || 'https://api.pinata.cloud'
+const PINATA_GATEWAY =
+  (import.meta.env.VITE_PINATA_GATEWAY || 'https://gateway.pinata.cloud/ipfs').replace(/\/$/, '')
+
+const ensurePinataJwt = () => {
+  if (!PINATA_JWT) {
+    throw new Error('Missing VITE_PINATA_JWT. Tambahkan JWT Pinata di .env')
+  }
+}
 
 /**
  * Format metadata according to ERC721 metadata standard
@@ -34,35 +35,36 @@ const formatMetadata = (payload) => {
 }
 
 /**
- * Upload JSON to IPFS (mock implementation)
- * 
- * TODO: Replace with real IPFS service:
- * 
- * Example with Pinata:
- * ```js
- * const formData = new FormData()
- * formData.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
- * const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
- *   method: 'POST',
- *   headers: { 'Authorization': `Bearer ${PINATA_JWT}` },
- *   body: formData
- * })
- * const data = await res.json()
- * return { cid: `ipfs://${data.IpfsHash}`, ... }
- * ```
+ * Upload JSON to IPFS (Pinata)
  */
 export const uploadJSONToIPFS = async (payload) => {
-  await delay(1500) // Simulate upload time
-  
+  ensurePinataJwt()
+
   const metadata = formatMetadata(payload)
-  
-  // Generate a deterministic CID-like string from hash for consistency
-  const hashPrefix = payload.hash ? payload.hash.slice(0, 16) : crypto.randomUUID().slice(0, 16)
-  const mockCid = `Qm${hashPrefix}${crypto.randomUUID().replace(/-/g, '').slice(0, 32)}`
-  
+
+  const res = await fetch(`${PINATA_BASE_URL}/pinning/pinJSONToIPFS`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${PINATA_JWT}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(metadata),
+  })
+
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(`Pinata JSON upload failed: ${message}`)
+  }
+
+  const data = await res.json()
+  const cid = data.IpfsHash || data.cid || data.hash
+  if (!cid) throw new Error('Pinata JSON upload failed: missing CID')
+
+  const gatewayUrl = `${PINATA_GATEWAY}/${cid}`
+
   return {
-    cid: `ipfs://${mockCid}`,
-    gatewayUrl: `https://ipfs.io/ipfs/${mockCid}`,
+    cid: `ipfs://${cid}`,
+    gatewayUrl,
     payload: metadata,
     rawPayload: payload,
     timestamp: new Date().toISOString(),
@@ -70,18 +72,37 @@ export const uploadJSONToIPFS = async (payload) => {
 }
 
 /**
- * Upload file to IPFS (for future use)
+ * Upload file to IPFS (Pinata)
  */
 export const uploadFileToIPFS = async (file) => {
-  // TODO: Implement real file upload
-  // For now, return mock
-  await delay(2000)
-  const mockCid = `Qm${crypto.randomUUID().replace(/-/g, '')}`
+  ensurePinataJwt()
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${PINATA_BASE_URL}/pinning/pinFileToIPFS`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${PINATA_JWT}`,
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(`Pinata file upload failed: ${message}`)
+  }
+
+  const data = await res.json()
+  const cid = data.IpfsHash || data.cid || data.hash
+  if (!cid) throw new Error('Pinata file upload failed: missing CID')
+
+  const gatewayUrl = `${PINATA_GATEWAY}/${cid}`
+
   return {
-    cid: `ipfs://${mockCid}`,
-    gatewayUrl: `https://ipfs.io/ipfs/${mockCid}`,
+    cid: `ipfs://${cid}`,
+    gatewayUrl,
     fileName: file.name,
     fileSize: file.size,
   }
 }
-

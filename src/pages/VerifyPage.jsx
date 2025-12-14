@@ -51,7 +51,6 @@ const VerifyPage = () => {
 
     const hashBytes32 = normalizeHash(inputHash)
     setSearchHash(hashBytes32)
-    refetch()
   }
 
   const handleQRScan = (scannedData) => {
@@ -62,7 +61,6 @@ const VerifyPage = () => {
     const hashBytes32 = normalizeHash(scannedData)
     setInputHash(hashBytes32)
     setSearchHash(hashBytes32)
-    refetch()
   }
 
   const handleKeyPress = (e) => {
@@ -82,7 +80,7 @@ const VerifyPage = () => {
         <p className="text-white/60 uppercase text-xs tracking-[0.5em]">Verification</p>
         <h1 className="text-4xl font-semibold mt-4">Instant diploma validation</h1>
         <p className="text-white/60 mt-2">
-          Enter the SHA-256 file hash to verify on-chain. Results are fetched from Polygon Mumbai.
+          Enter the SHA-256 file hash to verify on-chain. Results are fetched from Polygon Amoy.
         </p>
         {(!contractAddress || !isValidContract) && (
           <div className="text-yellow-400 text-sm mt-2 space-y-1">
@@ -168,7 +166,7 @@ const VerifyPage = () => {
                   <li>Check if contract address in .env matches deployed contract</li>
                   <li>Ensure contract is deployed to the correct network</li>
                   <li>Restart dev server after updating .env</li>
-                  <li>Verify you're connected to the correct network (localhost:8545 or Mumbai)</li>
+                  <li>Verify you're connected to the correct network (localhost:8545 or Amoy)</li>
                 </ul>
                 {contractAddress && (
                   <p className="mt-2 pt-2 border-t border-red-500/30">

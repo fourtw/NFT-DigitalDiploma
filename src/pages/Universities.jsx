@@ -29,7 +29,7 @@ const Universities = () => (
       <p className="text-white/60 uppercase text-xs tracking-[0.5em]">Partners</p>
       <h1 className="text-4xl font-semibold mt-4">University network</h1>
       <p className="text-white/60 mt-2">
-        Institutions issuing diplomas through Project Vault with Polygon Mumbai.
+        Institutions issuing diplomas through Project Vault with Polygon Amoy.
       </p>
     </div>
 
