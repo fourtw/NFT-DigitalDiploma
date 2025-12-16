@@ -26,6 +26,7 @@ const formatMetadata = (payload) => {
       { trait_type: 'Student ID', value: payload.studentId || '' },
       { trait_type: 'Program', value: payload.program || '' },
       { trait_type: 'Year', value: payload.year || '' },
+      { trait_type: 'University', value: payload.university || '' },
       { trait_type: 'File Hash', value: payload.hash || '' },
       { trait_type: 'File Name', value: payload.fileName || '' },
       { trait_type: 'Issued At', value: new Date().toISOString() },

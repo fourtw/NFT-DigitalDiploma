@@ -3,12 +3,6 @@ import NeonButton from '../components/NeonButton.jsx'
 import GlassCard from '../components/GlassCard.jsx'
 import { Link } from 'react-router-dom'
 
-const stats = [
-  { label: 'Diplomas Issued', value: '42', sub: 'On-chain records' },
-  { label: 'Universities', value: '128', sub: 'Verified partners' },
-  { label: 'Verifications', value: '8.2K', sub: 'Monthly checks' },
-]
-
 const pillars = [
   {
     title: 'Issuance',
@@ -53,15 +47,6 @@ const LandingPage = () => (
             <NeonButton variant="secondary">Explore Blockchain</NeonButton>
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {stats.map((stat, idx) => (
-            <GlassCard key={stat.label} delay={idx * 0.05} className="p-4">
-              <p className="text-3xl font-semibold text-gradient">{stat.value}</p>
-              <p className="text-sm uppercase tracking-wide text-white/60">{stat.label}</p>
-              <p className="text-xs text-white/40">{stat.sub}</p>
-            </GlassCard>
-          ))}
-        </div>
       </div>
       <motion.div
         initial={{ opacity: 0, x: 30 }}
@@ -97,19 +82,13 @@ const LandingPage = () => (
       <GlassCard className="p-10 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <p className="text-white/60 uppercase text-xs tracking-[0.5em]">What is NFT Diploma?</p>
-            <h2 className="text-3xl font-semibold mt-2">Project Vault explained</h2>
+            <h2 className="text-3xl font-semibold mt-2">What is NFT Diploma?</h2>
             <p className="text-white/60 mt-4 max-w-2xl">
-              A fully responsive, glassy dashboard that mirrors your original Project Vault
-              UI. Every card, spacing, and neon glow is recreated with Tailwind + Framer
-              Motion.
+              NFT Diploma is a digital diploma system that issues, stores, and verifies academic certificates on blockchain.
             </p>
           </div>
-          <NeonButton variant="secondary" className="w-full sm:w-auto">
-            Learn More
-          </NeonButton>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 mt-4">
           {pillars.map((pillar) => (
             <div key={pillar.title} className="bg-white/5 rounded-3xl p-6 border border-white/5">
               <p className="text-white font-semibold text-lg mb-2">{pillar.title}</p>

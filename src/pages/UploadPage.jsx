@@ -7,11 +7,7 @@ import { useUploadToIPFS } from '../hooks/useUploadToIPFS.js'
 import { useMintProofWithContract } from '../hooks/useMintProof.js'
 import { useContract, useContractOwner } from '../hooks/useContract.js'
 
-const metrics = [
-  { label: 'Total Issued', value: 42 },
-  { label: 'Pending', value: 7 },
-  { label: 'Smart Contract', value: '0xCONTRACT...ABCD' },
-]
+const UNIVERSITY_NAME = 'University of Blockchain'
 
 const UploadPage = () => {
   const { address } = useAccount()
@@ -31,6 +27,11 @@ const UploadPage = () => {
 
   // Check if connected wallet is the contract owner
   const isOwner = address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase()
+
+  const formatAddress = (addr) => {
+    if (!addr) return 'N/A'
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  }
 
   // Convert hex string to bytes32
   const hashToBytes32 = (hexString) => {
@@ -125,6 +126,7 @@ const UploadPage = () => {
         ...formData,
         hash: hashPayload.hash,
         fileName: hashPayload.file?.name,
+        university: UNIVERSITY_NAME,
       }
       console.log('  Metadata:', metadata)
       
@@ -157,18 +159,33 @@ const UploadPage = () => {
         <p className="text-white/60 mt-2">Metadata is pinned to IPFS and minted under your university wallet.</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        {metrics.map((metric, idx) => (
-          <GlassCard key={metric.label} className="p-6" delay={idx * 0.05}>
-            <p className="text-sm text-white/50">{metric.label}</p>
-            <p className="text-3xl font-semibold mt-3">
-              {typeof metric.value === 'number' ? metric.value : metric.value}
-            </p>
-          </GlassCard>
-        ))}
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <GlassCard className="lg:col-span-2 p-5 flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Connected Wallet</p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="font-semibold text-white">{formatAddress(address) || 'Not connected'}</p>
+              <p className="text-white/60 text-sm">{UNIVERSITY_NAME}</p>
+            </div>
+            <span
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${
+                isOwner
+                  ? 'border-emerald-400/60 text-emerald-200 bg-emerald-500/10'
+                  : 'border-yellow-400/60 text-yellow-200 bg-yellow-500/10'
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isOwner ? 'bg-emerald-300' : 'bg-yellow-300'
+                }`}
+              />
+              {isOwner ? 'University Owner' : 'Not owner — connect owner wallet'}
+            </span>
+          </div>
+        </GlassCard>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
         <GlassCard className="p-8 space-y-6">
           <h2 className="text-2xl font-semibold">Issue Diploma</h2>
           <p className="text-sm text-white/60">
@@ -368,56 +385,9 @@ const UploadPage = () => {
             </div>
           )}
         </GlassCard>
-        <GlassCard className="p-8 space-y-6">
-          <h2 className="text-2xl font-semibold">Batch Upload</h2>
-          <p className="text-sm text-white/60">
-            Upload a CSV file to issue multiple diplomas at once. Gas fees apply for on-chain issuance.
-          </p>
-          <div className="space-y-4">
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-6 text-center text-white/70">
-              Coming soon — drag CSV here.
-            </div>
-            <NeonButton variant="secondary" className="w-full">
-              Upload
-            </NeonButton>
-          </div>
-        </GlassCard>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-8">
-        <FileUploader onHashGenerated={setHashPayload} />
-        <GlassCard className="p-8 space-y-4">
-          <h3 className="text-xl font-semibold">Issued Diplomas</h3>
-          <div className="space-y-4 text-sm">
-            {[
-              {
-                tokenId: '0x273_24FB',
-                name: 'Jane Doc',
-                program: 'CS',
-                year: '2023',
-                status: 'verified',
-              },
-              {
-                tokenId: '0x9F2E_E71C',
-                name: 'John Smin',
-                program: 'InfoSoc',
-                year: '2024',
-                status: 'pending',
-              },
-            ].map((row) => (
-              <div key={row.tokenId} className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div>
-                  <p className="font-medium">{row.name}</p>
-                  <p className="text-white/50 text-xs">{row.tokenId}</p>
-                </div>
-                <div className="text-right">
-                  <p>{row.program}</p>
-                  <p className="text-white/50 text-xs capitalize">{row.status}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
+        <div className="h-full">
+          <FileUploader onHashGenerated={setHashPayload} />
+        </div>
       </div>
     </section>
   )

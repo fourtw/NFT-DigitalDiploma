@@ -29,7 +29,7 @@ Ini akan:
 Buka **Terminal 2** (terminal baru) dan jalankan:
 
 ```bash
-npx hardhat run scripts/deploy.ts --network localhost
+npx hardhat run scripts/deploy.cjs --network localhost
 ```
 
 Output akan menampilkan:
